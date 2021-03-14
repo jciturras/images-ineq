@@ -1,7 +1,3 @@
-# taller-git
-
-**Autor**: Julio César Iturra Sanhueza.
-
 ## Estructura del repositorio:
 ```
 │   LICENSE
