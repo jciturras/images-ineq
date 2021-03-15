@@ -1,0 +1,410 @@
+---
+title: "Piramides ISSP Chile"
+author: "Beck und Iturra"
+date: "06-09-2020"
+output: 
+  html_document:
+    theme: paper
+    highlight: kate
+    number_sections: true
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    fig_width: 10 
+    fig_height: 8 
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(ggeffects)
+library(texreg)
+library(MASS)
+```
+
+# Datos
+```{r}
+load(file = "input/data/proc/ISSP.RData")
+```
+
+
+# Analisis Descriptivo
+
+## Graficos Variables Dependientes 
+
+```{r message=FALSE, warning=FALSE}
+PregA<-ISSP_P%>%
+  group_by(agno,PregA_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(PregA_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VD1<-ggplot(data=PregA, aes(x=PregA_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  ggtitle("Wich diagram describe the society today")+
+  xlab("Diagram Type")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")+
+  theme_bw()
+
+PregB<-ISSP_P%>%
+  group_by(agno,PregB_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(PregB_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VD2<-ggplot(data=PregB, aes(x=PregB_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  ggtitle("Which would you prefer for today")+
+  xlab("Diagram Type")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")+
+  theme_bw()
+
+VD<-ggarrange(VD1,VD2, 
+                    labels = c("","",""),
+                    ncol = 2,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave(filename = "output/images/VD.png",plot = VD, units ="cm", width = 20,height = 15)
+```
+
+## Graficos Variable Independientes
+
+### Características Demográficas
+
+```{r message=FALSE, warning=FALSE}
+#Sexo
+Sexo<-ISSP_P%>%
+  group_by(agno,Sexo)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(Sexo))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI1<-ggplot(data=Sexo, aes(x=Sexo, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw() +   
+  ggtitle("")+
+  xlab("Sex")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),limits = c(0,0.7)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")
+  
+
+#Edad
+Edad<-ISSP_P%>%
+  group_by(agno,Edad_t)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(Edad_t))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI2<-ggplot(data=Edad, aes(x=Edad_t, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw() +   
+  ggtitle("")+
+  xlab("Age")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),limits = c(0,0.7)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ") 
+
+#Estado Civil
+EstC<-ISSP_P%>%
+  group_by(agno,EstCiv_t)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(EstCiv_t))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI3<-ggplot(data=EstC, aes(x=EstCiv_t, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw() +   
+  ggtitle("")+
+  xlab("Civil Status")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),limits = c(0,0.7)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ") 
+
+#Escolaridad
+Escol<-ISSP_P%>%
+  group_by(agno,Escolaridad2_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(Escolaridad2_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI4<-ggplot(data=Escol, aes(x=Escolaridad2_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw() +   
+  ggtitle("")+
+  xlab("Scholarity")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),limits = c(0,0.7)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")
+
+#Posicion Politica
+Pospol<-ISSP_P%>%
+  group_by(agno,PosPol_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(PosPol_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI5<-ggplot(data=Pospol, aes(x=PosPol_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw() +   
+  ggtitle("")+
+  xlab("Politic Position")+
+  ylab("Percent")+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7),limits = c(0,0.7)) +
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ") 
+
+VII1<-ggarrange(VI1,VI2,VI3, 
+                    labels = c("","","",""),
+                    ncol = 3,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave("output/images/VI_1.png", VII1, units ="cm", width = 20,height = 10)
+
+VII2<-ggarrange(VI4,VI5, 
+                    labels = c("","",""),
+                    ncol = 2,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave("output/images/VI_2.png", VII2, units ="cm", width = 20,height = 10)
+```
+
+### Posicion Subjetiva
+
+```{r message=FALSE, warning=FALSE}
+PosicionA<-ISSP_P%>%
+  group_by(agno,PosionA_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(PosionA_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI6<-ggplot(data=PosicionA, aes(x=PosionA_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw()+
+  ggtitle("")+
+  xlab("Today")+
+  ylab("Percent")+
+  scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10))+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4),limits = c(0,0.4))+     
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")
+
+PosicionB<-ISSP_P%>%
+  group_by(agno,PosionB_r)%>%
+  summarise(freq=n())%>%
+  filter(!is.na(PosionB_r))%>%
+  dplyr::mutate(totfreq=sum(freq)) %>%  
+  dplyr::mutate(percA=freq/totfreq) %>%
+  dplyr::mutate(percA=round(percA,2))
+
+VI7<-ggplot(data=PosicionB, aes(x=PosionB_r, y=percA, fill=factor(agno) )) +
+  geom_bar(stat="identity", position = position_dodge ())+
+  theme_bw()+
+  ggtitle("")+
+  xlab("Origin/Ten years ago")+
+  ylab("Percent")+
+  scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10))+
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3,0.4),limits = c(0,0.4))+     
+  theme(legend.position = "bottom")+
+  scale_fill_discrete(name = " ")
+
+VIPS<-ggarrange(VI6,VI7, 
+                    labels = c("","",""),
+                    ncol = 2,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave("output/images/VI_PSubj.png", VIPS, units ="cm", width = 20,height = 15)
+
+```
+
+# Regresiones
+
+## Modelo por año completos
+
+```{r}
+#1999
+mca99 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+             data=cD1999)
+Lca99=extract(mca99,include.thresholds =TRUE,include.bic =FALSE)
+
+mcb99 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+              data=cD1999)
+Lcb99=extract(mcb99,include.thresholds =TRUE,include.bic =FALSE)
+
+
+
+#2009
+mca09 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+              data=cD2009)
+Lca09=extract(mca09,include.thresholds =TRUE,include.bic =FALSE)
+
+mcb09 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+              data=cD2009)
+Lcb09=extract(mcb09,include.thresholds =TRUE,include.bic =FALSE)
+
+
+#2019
+mca19 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+              data=cD2019)
+Lca19=extract(mca19,include.thresholds =TRUE,include.bic =FALSE)
+
+mcb19 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+  PosPol_r+PosionA_r+ PosionB_r,
+              data=cD2019)
+Lcb19=extract(mcb19,include.thresholds =TRUE,include.bic =FALSE)
+
+
+knitreg(l=list(Lca99,Lca09,Lca19),caption = "Como es 99/09/19")
+knitreg(l=list(Lcb99,Lcb09,Lcb19),caption = "Como debería ser 99/09/19")
+```
+
+## Efecto Fijo
+```{r}
+#Como es
+m31 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+ PosionA_r+ factor(agno),
+            data=ISSP_P)
+L1=extract(m31,include.thresholds =TRUE,include.bic =FALSE)
+
+m33 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+ PosionB_r+ factor(agno),
+            data=ISSP_P)
+L3=extract(m33,include.thresholds =TRUE,include.bic =FALSE)
+
+m35 <- polr(PregA_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+ PosionA_r+ PosionB_r+ factor(agno),
+            data=ISSP_P)
+L5=extract(m35,include.thresholds =TRUE,include.bic =FALSE)
+
+
+
+#Como debería ser
+m32 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+ PosionA_r+ factor(agno),
+            data=ISSP_P)
+L2=extract(m32,include.thresholds =TRUE,include.bic =FALSE)
+
+m34 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+ PosionB_r+ factor(agno),
+            data=ISSP_P)
+L4=extract(m34,include.thresholds =TRUE,include.bic =FALSE)
+
+m36 <- polr(PregB_r ~ Sexo + Edad_t + Escolaridad2_r+ Trabajo_r2+ quintil+PosPol_r+PosionA_r+PosionB_r+ factor(agno),
+            data=ISSP_P)
+L6=extract(m36,include.thresholds =TRUE,include.bic =FALSE)
+
+knitreg(l=list(L1,L3,L5),caption = "Como es")
+knitreg(l=list(L2,L4,L6),caption = "Debería ser")
+```
+
+## Valores predichos
+
+```{r}
+#Como es
+PV35a<-as.data.frame(ggpredict(m35, "PosionA_r"))
+PV35a$Diagram<-PV35a$response.level
+
+PPV35a<-ggplot(data=PV35a, aes(x=x, y=predicted, group=Diagram)) +
+  geom_line(aes(color=Diagram))+
+  scale_color_manual(values = c("black", "blue", "red","green","brown"),
+                     labels = c("Type A", "Type B","Type C", "Type D", "Type E")) + 
+  labs(x = "Diagram")+
+  # theme_minimal()+
+  theme(legend.position="bottom")+
+  scale_y_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5))+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10))+
+  ylab("Predicted values")+xlab("Actual subjective position")+
+  theme_bw()
+
+PV35b<-as.data.frame(ggpredict(m35, "PosionB_r"))
+PV35b$Diagram<-PV35b$response.level
+
+PPV35b<-ggplot(data=PV35b, aes(x=x, y=predicted, group=Diagram)) +
+  geom_line(aes(color=Diagram))+
+  scale_color_manual(values = c("black", "blue", "red","green","brown"),
+                     labels = c("Type A", "Type B","Type C", "Type D", "Type E")) + 
+  labs(x = "Diagram")+
+  # theme_minimal()+
+  theme(legend.position="bottom")+
+  scale_y_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5))+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10))+
+  ylab("Predicted values")+xlab("Origin subjective position")+
+  theme_bw()
+
+
+VIPS<-ggarrange(PPV35a,PPV35b, 
+                    labels = c("","",""),
+                    ncol = 2,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave("output/images/PV_perception_PSubj.png", VIPS, units ="cm", width = 20,height = 15)
+
+
+#Como debería ser
+PV36a<-as.data.frame(ggpredict(m36, "PosionA_r"))
+PV36a$Diagram<-PV36a$response.level
+
+PPV36a<-ggplot(data=PV36a, aes(x=x, y=predicted, group=Diagram)) +
+  geom_line(aes(color=Diagram))+
+  scale_color_manual(values = c("black", "blue", "red","green","brown"),
+                     labels = c("Type A", "Type B","Type C", "Type D", "Type E")) + 
+  labs(x = "Diagram")+
+  # theme_minimal()+
+  theme(legend.position="bottom")+
+  scale_y_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5))+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10))+
+  ylab("Predicted values")+xlab("Actual subjective position")+
+  theme_bw()
+
+PV36b<-as.data.frame(ggpredict(m36, "PosionB_r"))
+PV36b$Diagram<-PV36b$response.level
+
+PPV36b<-ggplot(data=PV36b, aes(x=x, y=predicted, group=Diagram)) +
+  geom_line(aes(color=Diagram))+
+  scale_color_manual(values = c("black", "blue", "red","green","brown"),
+                     labels = c("Type A", "Type B","Type C", "Type D", "Type E")) + 
+  labs(x = "Diagram")+
+  # theme_minimal()+
+  theme(legend.position="bottom")+
+  scale_y_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5))+
+  scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8,9,10))+
+  ylab("Predicted values")+xlab("Origin subjective position")+
+  theme_bw()
+
+
+VIPS<-ggarrange(PPV36a,PPV36b, 
+                    labels = c("","",""),
+                    ncol = 2,
+                    common.legend = TRUE, legend = "bottom",font.label = list(size = 10))
+
+ggsave("output/images/PV_prefence_PSubj.png", VIPS, units ="cm", width = 20,height = 15)
+```
+
