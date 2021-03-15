@@ -4,7 +4,7 @@
 ```
 │   LICENSE
 │   README.md
-│   taller-git.Rproj
+│   images-ineq.Rproj
 │
 ├───docs
 │       README-docs.md
