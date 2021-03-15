@@ -1,3 +1,5 @@
+# Perception of Inequality: An Approach to Chilean Society Using Cross-Sectional Data
+
 ## Estructura del repositorio:
 ```
 │   LICENSE
